@@ -20,7 +20,7 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	orderChan := make(chan *Order)
+	orderChan := make(chan *Order, 20)
 	go func() {
 		defer wg.Done()
 		for _, order := range generateOrders(20) {
