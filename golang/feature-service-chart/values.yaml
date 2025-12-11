@@ -1,0 +1,52 @@
+replicaCount: 2
+
+image:
+  repository: rammurthymalisetti/feature-service
+  tag: "dev"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# imagePullSecrets:
+#   - name: my-regcred
+
+service:
+  type: ClusterIP
+  port: 80      # service port inside cluster
+  targetPort: 8080  # container port (your Go app)
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+podAnnotations: {}
+
+podLabels: {}
+
+env:
+  # Your Go app reads PORT env (we wired that earlier)
+  PORT: "8080"
+
+livenessProbe:
+  enabled: true
+  path: /healthz
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  path: /healthz
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+

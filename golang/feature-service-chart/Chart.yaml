@@ -1,0 +1,7 @@
+apiVersion: v2
+name: feature-service
+description: A Helm chart for the Feature Management service (Go backend)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
