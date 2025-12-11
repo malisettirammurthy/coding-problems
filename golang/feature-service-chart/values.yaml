@@ -10,9 +10,11 @@ imagePullSecrets: []
 #   - name: my-regcred
 
 service:
-  type: ClusterIP
-  port: 80      # service port inside cluster
-  targetPort: 8080  # container port (your Go app)
+  type: NodePort        # was ClusterIP
+  port: 80              # service port inside cluster
+  targetPort: 8080      # container port
+  nodePort: 30080       # external port on node (must be 30000–32767)
+
 
 resources:
   requests:
