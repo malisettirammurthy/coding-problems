@@ -19,19 +19,34 @@ import (
 func main() {
 	// ---- DB setup ----
 	dbURL := os.Getenv("DATABASE_URL")
+
+	var (
+		featureSvc services.FeatureService
+		pool       *pgxpool.Pool
+	)
+
 	if dbURL == "" {
-		log.Fatal("DATABASE_URL is not set")
+		log.Println("DATABASE_URL not set; starting in IN-MEMORY mode")
+		featureSvc = services.NewInMemoryFeatureService()
+	} else {
+		log.Printf("DATABASE_URL found; starting in POSTGRES mode (url=%s)", dbURL)
+
+		ctx := context.Background()
+		p, err := pgxpool.New(ctx, dbURL)
+		if err != nil {
+			log.Fatalf("failed to create db pool: %v", err)
+		}
+		if err := p.Ping(ctx); err != nil {
+			log.Fatalf("failed to ping db: %v", err)
+		}
+
+		pool = p
+		featureSvc = services.NewPostgresFeatureService(pool)
 	}
 
-	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, dbURL)
-	if err != nil {
-		log.Fatalf("failed to create db pool: %v", err)
-	}
-	defer pool.Close()
-
-	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("failed to ping db: %v", err)
+	// Close pool only if we actually created it
+	if pool != nil {
+		defer pool.Close()
 	}
 
 	// ---- Router + services ----
@@ -53,8 +68,17 @@ func main() {
 	// featureSvc := services.NewInMemoryFeatureService()
 	// featureHandler := handlers.NewFeatureService(featureSvc)
 
-	// Postgres baked feature service + routes
-	featureSvc := services.NewPostgresFeatureService(pool)
+	// // Postgres baked feature service + routes
+	// featureSvc := services.NewPostgresFeatureService(pool)
+	// featureHandler := handlers.NewFeatureServiceHandler(featureSvc)
+
+	// Health check endpoint
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	// Feature service + routes (uses whichever implementation we picked)
 	featureHandler := handlers.NewFeatureServiceHandler(featureSvc)
 
 	r.Route("/api/v1/features", func(r chi.Router) {
