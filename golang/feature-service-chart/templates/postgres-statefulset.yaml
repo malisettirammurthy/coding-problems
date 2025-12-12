@@ -19,6 +19,10 @@ spec:
         app.kubernetes.io/name: {{ include "feature-service.name" . }}-postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      volumes:
+        - name: init-sql
+          configMap:
+            name: {{ include "feature-service.fullname" . }}-postgres-init
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
@@ -31,6 +35,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
   volumeClaimTemplates:
     - metadata:
         name: data

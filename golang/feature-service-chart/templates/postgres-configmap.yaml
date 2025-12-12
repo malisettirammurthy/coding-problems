@@ -1,0 +1,17 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "feature-service.fullname" . }}-postgres-init
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS features (
+      id          UUID PRIMARY KEY,
+      name        TEXT NOT NULL,
+      description TEXT,
+      status      TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL,
+      updated_at  TIMESTAMPTZ NOT NULL
+    );
+{{- end }}
+
