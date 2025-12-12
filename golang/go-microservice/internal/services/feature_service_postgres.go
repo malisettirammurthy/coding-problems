@@ -46,17 +46,50 @@ func (s *PostgresFeatureService) CreateFeature(name, description string) (*model
 }
 
 func (s *PostgresFeatureService) CreateBatchFeatures(batchFeatures map[string]string) ([]*models.Feature, error) {
-	var out []*models.Feature
+	if len(batchFeatures) == 0 {
+		// no-op, but not an error
+		return []*models.Feature{}, nil
+	}
 
-	for name, descr := range batchFeatures {
-		f, err := s.CreateFeature(name, descr)
+	ctx := context.Background()
+
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	features := make([]*models.Feature, 0, len(batchFeatures))
+
+	for name, desc := range batchFeatures {
+		f := &models.Feature{
+			ID:          uuid.NewString(),
+			Name:        name,
+			Description: desc,
+			Status:      models.StatusDisabled,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		_, err = tx.Exec(
+			ctx,
+			`INSERT INTO features (id, name, description, status, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+			f.ID, f.Name, f.Description, string(f.Status), f.CreatedAt, f.UpdatedAt,
+		)
 		if err != nil {
-			out = append(out, f)
-		} else {
+			_ = tx.Rollback(ctx)
 			return nil, err
 		}
+
+		features = append(features, f)
 	}
-	return out, nil
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return features, nil
 }
 
 func (s *PostgresFeatureService) GetFeature(id string) (*models.Feature, error) {

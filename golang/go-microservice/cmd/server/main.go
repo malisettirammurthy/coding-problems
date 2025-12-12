@@ -55,7 +55,7 @@ func main() {
 
 	// Postgres baked feature service + routes
 	featureSvc := services.NewPostgresFeatureService(pool)
-	featureHandler := handlers.NewFeatureService(featureSvc)
+	featureHandler := handlers.NewFeatureServiceHandler(featureSvc)
 
 	r.Route("/api/v1/features", func(r chi.Router) {
 		featureHandler.RegisterRoutes(r)

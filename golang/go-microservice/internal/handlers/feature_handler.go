@@ -13,12 +13,13 @@ type FeatureHandler struct {
 	svc services.FeatureService
 }
 
-func NewFeatureService(svc services.FeatureService) *FeatureHandler {
+func NewFeatureServiceHandler(svc services.FeatureService) *FeatureHandler {
 	return &FeatureHandler{svc: svc}
 }
 
 func (h *FeatureHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/", h.CreateFeature)
+	r.Post("/batch", h.CreateBatchFeatures)
 	r.Get("/", h.ListFeatures)
 	r.Get("/{id}", h.GetFeature)
 }
@@ -54,6 +55,37 @@ func (h *FeatureHandler) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("CreateFeature: created feature id=%s name=%s", feature.ID, feature.Name)
 	writeJSON(w, http.StatusOK, feature)
+}
+
+func (h *FeatureHandler) CreateBatchFeatures(w http.ResponseWriter, r *http.Request) {
+	// Input JSON format:
+	// {
+	//   "feature-one": "desc 1",
+	//   "feature-two": "desc 2"
+	// }
+
+	var payload map[string]string
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		log.Printf("CreateBatchFeatures: invalid request body: %v", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	if len(payload) == 0 {
+		log.Printf("CreateBatchFeatures: at least one feature is required")
+		http.Error(w, "at least one feature is required", http.StatusBadRequest)
+		return
+	}
+
+	features, err := h.svc.CreateBatchFeatures(payload)
+	if err != nil {
+		// You can log err here for debugging
+		log.Printf("CreateBatchFeatures: could not create features batch")
+		http.Error(w, "could not create features batch", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, features)
 }
 
 func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {

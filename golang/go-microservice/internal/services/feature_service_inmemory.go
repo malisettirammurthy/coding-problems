@@ -13,13 +13,6 @@ var (
 	ErrFeatureNotFound = errors.New("feature not found")
 )
 
-type FeatureService interface {
-	CreateFeature(name, description string) (*models.Feature, error)
-	CreateBatchFeatures(map[string]string) ([]*models.Feature, error)
-	GetFeature(id string) (*models.Feature, error)
-	ListFeatures() ([]*models.Feature, error)
-}
-
 type InMemoryFeatureService struct {
 	mu    sync.RWMutex
 	store map[string]*models.Feature
@@ -47,25 +40,18 @@ func (s *InMemoryFeatureService) CreateFeature(name, description string) (*model
 	return f, nil
 }
 
-func (s *InMemoryFeatureService) CreateBatchFeatures(batch map[string]string) ([]*models.Feature, error) {
-	now := time.Now().UTC()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var out []*models.Feature
+func (s *InMemoryFeatureService) CreateBatchFeatures(batchFeatures map[string]string) ([]*models.Feature, error) {
+	features := make([]*models.Feature, 0, len(batchFeatures))
 
-	for name, descr := range batch {
-		f := &models.Feature{
-			ID:          uuid.NewString(),
-			Name:        name,
-			Description: descr,
-			Status:      models.StatusDisabled,
-			CreatedAt:   now,
-			UpdatedAt:   now,
+	for name, desc := range batchFeatures {
+		f, err := s.CreateFeature(name, desc)
+		if err != nil {
+			return nil, err
 		}
-		s.store[f.ID] = f
-		out = append(out, f)
+		features = append(features, f)
 	}
-	return out, nil
+
+	return features, nil
 }
 
 func (s *InMemoryFeatureService) GetFeature(id string) (*models.Feature, error) {
