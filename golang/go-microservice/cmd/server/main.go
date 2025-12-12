@@ -10,11 +10,30 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ram/microservice/internal/handlers"
 	"github.com/ram/microservice/internal/services"
 )
 
 func main() {
+	// ---- DB setup ----
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("failed to create db pool: %v", err)
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatalf("failed to ping db: %v", err)
+	}
+
+	// ---- Router + services ----
 	r := chi.NewRouter()
 
 	// Health check end point
@@ -23,13 +42,19 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
-	// Feature service + routes
-	featureSvc := services.NewInMemoryFeatureService()
+	// // Feature service + routes
+	// featureSvc := services.NewInMemoryFeatureService()
+	// featureHandler := handlers.NewFeatureService(featureSvc)
+
+	// Postgres baked feature service + routes
+	featureSvc := services.NewPostgresFeatureService(pool)
 	featureHandler := handlers.NewFeatureService(featureSvc)
+
 	r.Route("/api/v1/features", func(r chi.Router) {
 		featureHandler.RegisterRoutes(r)
 	})
 
+	// Port from env (default 8080)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -43,6 +68,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
+	// Start server
 	go func() {
 		log.Println("Server starting on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -50,9 +76,10 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt
+	// Wait for interrupt - Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
 	<-stop
 	log.Println("Shuttind down server...")
 
