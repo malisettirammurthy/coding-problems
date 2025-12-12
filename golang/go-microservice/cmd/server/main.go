@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ram/microservice/internal/handlers"
 	"github.com/ram/microservice/internal/services"
@@ -35,6 +36,12 @@ func main() {
 
 	// ---- Router + services ----
 	r := chi.NewRouter()
+
+	// Global middlewares
+	r.Use(middleware.RequestID) // adds X-Request-ID
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger) // <-- logs every request
+	r.Use(middleware.Recoverer)
 
 	// Health check end point
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {

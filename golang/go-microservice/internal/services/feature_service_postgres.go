@@ -45,6 +45,20 @@ func (s *PostgresFeatureService) CreateFeature(name, description string) (*model
 	return f, nil
 }
 
+func (s *PostgresFeatureService) CreateBatchFeatures(batchFeatures map[string]string) ([]*models.Feature, error) {
+	var out []*models.Feature
+
+	for name, descr := range batchFeatures {
+		f, err := s.CreateFeature(name, descr)
+		if err != nil {
+			out = append(out, f)
+		} else {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
 func (s *PostgresFeatureService) GetFeature(id string) (*models.Feature, error) {
 	row := s.db.QueryRow(
 		context.Background(),

@@ -51,7 +51,7 @@ func (s *InMemoryFeatureService) CreateBatchFeatures(batch map[string]string) ([
 	now := time.Now().UTC()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	out := make([]*models.Feature, 0, len(batch))
+	var out []*models.Feature
 
 	for name, descr := range batch {
 		f := &models.Feature{

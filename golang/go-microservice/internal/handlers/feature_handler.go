@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,18 +37,22 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 func (h *FeatureHandler) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	var req createFeatureRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("CreateFeature: invalid body: %v", err)
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	if req.Name == "" {
+		log.Printf("CreateFeature: missing name")
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
 	}
 	feature, err := h.svc.CreateFeature(req.Name, req.Description)
 	if err != nil {
+		log.Printf("CreateFeature: svc error: %v", err)
 		http.Error(w, "could not create feature", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("CreateFeature: created feature id=%s name=%s", feature.ID, feature.Name)
 	writeJSON(w, http.StatusOK, feature)
 }
 
@@ -66,6 +71,7 @@ func (h *FeatureHandler) GetFeature(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("GetFeature: get feature with id=%s name=%s", id, feature.Name)
 	writeJSON(w, http.StatusOK, feature)
 }
 
