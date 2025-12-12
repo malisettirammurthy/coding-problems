@@ -45,6 +45,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "feature-service.fullname" . }}-postgres
                   key: DATABASE_URL
+            - name: AUDIT_SERVICE_URL
+              value: "{{ .Values.env.AUDIT_SERVICE_URL }}"
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:

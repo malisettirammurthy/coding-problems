@@ -6,15 +6,17 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/ram/microservice/internal/clients"
 	"github.com/ram/microservice/internal/services"
 )
 
 type FeatureHandler struct {
-	svc services.FeatureService
+	svc         services.FeatureService
+	auditClient *clients.AuditClient
 }
 
-func NewFeatureServiceHandler(svc services.FeatureService) *FeatureHandler {
-	return &FeatureHandler{svc: svc}
+func NewFeatureServiceHandler(svc services.FeatureService, auditClient *clients.AuditClient) *FeatureHandler {
+	return &FeatureHandler{svc: svc, auditClient: auditClient}
 }
 
 func (h *FeatureHandler) RegisterRoutes(r chi.Router) {
@@ -52,6 +54,12 @@ func (h *FeatureHandler) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		log.Printf("CreateFeature: svc error: %v", err)
 		http.Error(w, "could not create feature", http.StatusInternalServerError)
 		return
+	}
+	// fire-and-forget audit (log error but not blocking the main flow)
+	if h.auditClient != nil {
+		if err := h.auditClient.FeatureCreated(feature.ID, feature.Name); err != nil {
+			log.Printf("failed to send audit event: %v", err)
+		}
 	}
 	log.Printf("CreateFeature: created feature id=%s name=%s", feature.ID, feature.Name)
 	writeJSON(w, http.StatusOK, feature)

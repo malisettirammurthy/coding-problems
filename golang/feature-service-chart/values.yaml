@@ -31,6 +31,7 @@ podLabels: {}
 env:
   # Your Go app reads PORT env (we wired that earlier)
   PORT: "8080"
+  AUDIT_SERVICE_URL: "http://audit-service"
 
 livenessProbe:
   enabled: true

@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/ram/microservice/internal/clients"
 	"github.com/ram/microservice/internal/handlers"
 	"github.com/ram/microservice/internal/services"
 )
@@ -49,6 +50,12 @@ func main() {
 		defer pool.Close()
 	}
 
+	auditBaseURL := os.Getenv("AUDIT_SERVICE_URL") // e.g. http://audit-service
+	var auditClient *clients.AuditClient
+	if auditBaseURL != "" {
+		auditClient = clients.NewAuditClient(auditBaseURL)
+	}
+
 	// ---- Router + services ----
 	r := chi.NewRouter()
 
@@ -79,7 +86,7 @@ func main() {
 	})
 
 	// Feature service + routes (uses whichever implementation we picked)
-	featureHandler := handlers.NewFeatureServiceHandler(featureSvc)
+	featureHandler := handlers.NewFeatureServiceHandler(featureSvc, auditClient)
 
 	r.Route("/api/v1/features", func(r chi.Router) {
 		featureHandler.RegisterRoutes(r)
