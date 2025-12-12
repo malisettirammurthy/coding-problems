@@ -52,3 +52,15 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+
+postgres:
+  enabled: true
+  image: postgres:16
+  username: postgres
+  password: postgres
+  database: featuredb
+  port: 5432
+
+  storage:
+    size: 1Gi   # dev: 1Gi is enough
+

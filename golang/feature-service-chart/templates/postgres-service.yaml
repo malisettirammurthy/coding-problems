@@ -1,0 +1,19 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "feature-service.fullname" . }}-postgres
+  labels:
+    app.kubernetes.io/name: {{ include "feature-service.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.postgres.port }}
+      targetPort: {{ .Values.postgres.port }}
+      name: postgres
+  selector:
+    app.kubernetes.io/name: {{ include "feature-service.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
