@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: rammurthymalisetti/feature-service
-  tag: "v0.2"
+  tag: "v0.3"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
