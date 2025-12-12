@@ -10,3 +10,7 @@
 {{- end }}
 {{- end }}
 
+{{- define "feature-service.databaseUrl" -}}
+{{ printf "postgres://%s:%s@%s-postgres:%d/%s?sslmode=disable" .Values.postgres.username .Values.postgres.password (include "feature-service.fullname" .) .Values.postgres.port .Values.postgres.database }}
+{{- end }}
+
