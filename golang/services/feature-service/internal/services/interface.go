@@ -7,4 +7,5 @@ type FeatureService interface {
 	CreateBatchFeatures(batchFeatures map[string]string) ([]*models.Feature, error)
 	GetFeature(id string) (*models.Feature, error)
 	ListFeatures() ([]*models.Feature, error)
+	CountFeatures() (int, error)
 }

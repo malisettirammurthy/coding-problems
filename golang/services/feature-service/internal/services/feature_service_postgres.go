@@ -161,3 +161,12 @@ func (s *PostgresFeatureService) ListFeatures() ([]*models.Feature, error) {
 
 	return out, nil
 }
+
+func (s *PostgresFeatureService) CountFeatures() (int, error) {
+	var count int
+	err := s.db.QueryRow(context.Background(), `SELECT count(*) FROM features`).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, err
+}

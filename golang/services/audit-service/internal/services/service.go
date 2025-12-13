@@ -11,6 +11,7 @@ import (
 type AuditService interface {
 	CreateEvent(eventType, entityType, entityID, message string) (*models.AuditEvent, error)
 	ListEvents() ([]*models.AuditEvent, error)
+	CountEvents() (int, error)
 }
 
 type InMemoryAuditService struct {
@@ -47,4 +48,10 @@ func (s *InMemoryAuditService) ListEvents() ([]*models.AuditEvent, error) {
 	out := make([]*models.AuditEvent, len(s.events))
 	copy(out, s.events)
 	return out, nil
+}
+
+func (s *InMemoryAuditService) CountEvents() (int, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.events), nil
 }

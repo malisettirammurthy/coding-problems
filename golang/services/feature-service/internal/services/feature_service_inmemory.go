@@ -74,3 +74,9 @@ func (s *InMemoryFeatureService) ListFeatures() ([]*models.Feature, error) {
 	}
 	return out, nil
 }
+
+func (s *InMemoryFeatureService) CountFeatures() (int, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.store), nil
+}

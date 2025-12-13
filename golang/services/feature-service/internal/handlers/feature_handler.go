@@ -24,6 +24,7 @@ func (h *FeatureHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/batch", h.CreateBatchFeatures)
 	r.Get("/", h.ListFeatures)
 	r.Get("/{id}", h.GetFeature)
+	r.Get("/count", h.CountFeatures)
 }
 
 type createFeatureRequest struct {
@@ -122,4 +123,13 @@ func (h *FeatureHandler) ListFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, features)
+}
+
+func (h *FeatureHandler) CountFeatures(w http.ResponseWriter, r *http.Request) {
+	count, err := h.svc.CountFeatures()
+	if err != nil {
+		http.Error(w, "could not count features", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"count": count})
 }

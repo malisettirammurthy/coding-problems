@@ -27,6 +27,7 @@ type createAuditRequest struct {
 func (h *AuditHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/", h.CreateAuditEvent)
 	r.Get("/", h.ListAuditEvents)
+	r.Get("/count", h.CountAuditEvents)
 }
 
 func (h *AuditHandler) CreateAuditEvent(w http.ResponseWriter, r *http.Request) {
@@ -58,4 +59,14 @@ func (h *AuditHandler) ListAuditEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = json.NewEncoder(w).Encode(evs)
+}
+
+func (h *AuditHandler) CountAuditEvents(w http.ResponseWriter, r *http.Request) {
+	count, err := h.svc.CountEvents()
+	if err != nil {
+		http.Error(w, "could not count events", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]int{"count": count})
 }
