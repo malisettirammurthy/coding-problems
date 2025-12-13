@@ -42,7 +42,7 @@ func (c *AuditClient) FeatureCreated(featureID, featureName string) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.baseURL+"/api/v1/audit", bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, c.baseURL+"/api/v1/audits", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}

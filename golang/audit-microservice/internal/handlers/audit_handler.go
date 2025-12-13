@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -31,15 +32,19 @@ func (h *AuditHandler) RegisterRoutes(r chi.Router) {
 func (h *AuditHandler) CreateAuditEvent(w http.ResponseWriter, r *http.Request) {
 	var req createAuditRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("CreateAuditEvent: invalid body: %v", err)
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
 
 	ev, err := h.svc.CreateEvent(req.EventType, req.EntityType, req.EntityID, req.Message)
 	if err != nil {
+		log.Printf("CreateAuditEvent: could not create event: %v", err)
 		http.Error(w, "could not create event", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("CreateAuditEvent: Audit event created!")
 
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(ev)
