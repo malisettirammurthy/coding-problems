@@ -78,7 +78,7 @@ func (s *PostgresFeatureService) CreateBatchFeatures(batchFeatures map[string]st
 			f.ID, f.Name, f.Description, string(f.Status), f.CreatedAt, f.UpdatedAt,
 		)
 		if err != nil {
-			_ = tx.Rollback(ctx)
+			tx.Rollback(ctx)
 			return nil, err
 		}
 

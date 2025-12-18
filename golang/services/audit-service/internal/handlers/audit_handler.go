@@ -48,7 +48,7 @@ func (h *AuditHandler) CreateAuditEvent(w http.ResponseWriter, r *http.Request) 
 	log.Printf("CreateAuditEvent: Audit event created!")
 
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(ev)
+	json.NewEncoder(w).Encode(ev)
 }
 
 func (h *AuditHandler) ListAuditEvents(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func (h *AuditHandler) ListAuditEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = json.NewEncoder(w).Encode(evs)
+	json.NewEncoder(w).Encode(evs)
 }
 
 func (h *AuditHandler) CountAuditEvents(w http.ResponseWriter, r *http.Request) {
@@ -68,5 +68,5 @@ func (h *AuditHandler) CountAuditEvents(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]int{"count": count})
+	json.NewEncoder(w).Encode(map[string]int{"count": count})
 }
