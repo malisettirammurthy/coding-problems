@@ -63,6 +63,8 @@ class TraceReconstructor:
             if span.parent_span_id is None:
                 root = nodes[span.span_id]
             elif span.parent_span_id in nodes:
+                # nodes[span.parent_span_id].children.append(nodes[span.span_id])
+                # nodes[span.parent_span_id].children.append(span)
                 nodes[span.parent_span_id].children.append(nodes[span.span_id])
         return root
 
@@ -85,6 +87,7 @@ class TraceReconstructor:
         for child in node.children:
             self.print_tree(child, indent + 1)
 
+
 t = TraceReconstructor()
 _spans = []
 for _s in spans:
@@ -102,6 +105,6 @@ for _s in spans:
 root = t.build_tree(_spans)
 pprint(root)
 # print(t.critical_path(root))
-# print(t.total_duration(root))
+print("Total Duration:", t.total_duration(root))
 t.print_tree(root)
 
