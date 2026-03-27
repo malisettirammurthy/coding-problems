@@ -81,10 +81,13 @@ MetricsRegistry  (separate, not a Metric)
 import math
 from abc import ABC, abstractmethod
 import random
+import threading
 
+#
 class Metric(ABC):
     def __init__(self, name):
         self.name = name
+        self._lock = threading.Lock()
 
     @abstractmethod
     def snapshot(self):
@@ -103,7 +106,8 @@ class Counter(Metric):
     def increment(self, amount=1):
         if amount < 0:
             raise ValueError("Counter can only increment - use Gauge for values to support decrement.")
-        self._value += amount
+        with self._lock:
+            self._value += amount
 
     def snapshot(self):
         return {'name': self.name,
@@ -111,7 +115,8 @@ class Counter(Metric):
                 'value': self._value}
 
     def reset(self):
-        self._value = 0.0
+        with self._lock:
+            self._value = 0.0
 
 
 #
@@ -121,13 +126,16 @@ class Gauge(Metric):
         self._value = 0.0
     
     def set(self, value):
-        self._value = value
+        with self._lock:
+            self._value = value
     
     def increment(self, amount=1):
-        self._value += amount
+        with self._lock:
+            self._value += amount
 
     def decrement(self, amount=1):
-        self._value -= amount
+        with self._lock:
+            self._value -= amount
 
     def snapshot(self):
         return {'name': self.name,
@@ -135,7 +143,8 @@ class Gauge(Metric):
                 'value': self._value}
 
     def reset(self):
-        self._value = 0.0
+        with self._lock:
+            self._value = 0.0
 #
 class Histogram(Metric):
     def __init__(self, name):
@@ -143,7 +152,8 @@ class Histogram(Metric):
         self.observations = []
     
     def observe(self, value):
-        self.observations.append(value)
+        with self._lock:
+            self.observations.append(value)
 
     def percentile(self, p):
         if not self.observations:
@@ -163,55 +173,65 @@ class Histogram(Metric):
                 }
 
     def reset(self):
-        self.observations = []
+        with self._lock:
+            self.observations = []
 
-
+#
 class MetricsRegistry():
     _instance = None
+    _class_lock = threading.Lock()     # separate lock for singleton creation
+
     def __init__(self):
         self._metrics = {} #name: metric object.
+        self._lock = threading.Lock()  # lock for registry writes
 
     @classmethod
     def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = cls()
+        with cls._class_lock:
+            if cls._instance is None:
+                cls._instance = cls()
         return cls._instance
 
     def counter(self, name):
-        if name in self._metrics:
-            metric_obj = self._metrics[name]
-        else:
-            metric_obj = Counter(name)
-            self._metrics[name] = metric_obj
+        with self._lock:
+            if name in self._metrics:
+                metric_obj = self._metrics[name]
+            else:
+                metric_obj = Counter(name)
+                self._metrics[name] = metric_obj
         return metric_obj
 
     def gauge(self, name):
-        if name in self._metrics:
-            metric_obj = self._metrics[name]
-        else:
-            metric_obj = Gauge(name)
-            self._metrics[name] = metric_obj
+        with self._lock:
+            if name in self._metrics:
+                metric_obj = self._metrics[name]
+            else:
+                metric_obj = Gauge(name)
+                self._metrics[name] = metric_obj
         return metric_obj
 
     def histogram(self, name):
-        if name in self._metrics:
-            metric_obj = self._metrics[name]
-        else:
-            metric_obj = Histogram(name)
-            self._metrics[name] = metric_obj
+        with self._lock:
+            if name in self._metrics:
+                metric_obj = self._metrics[name]
+            else:
+                metric_obj = Histogram(name)
+                self._metrics[name] = metric_obj
         return metric_obj
 
     def collect_all(self):
-        for m, m_obj in self._metrics.items():
-            data = m_obj.snapshot()
-            # print(f"name: {data['name']}, type: {data['type']}, value: {data['value']}")
-            print(data)
+        with self._lock:
+            for m, m_obj in self._metrics.items():
+                data = m_obj.snapshot()
+                # print(f"name: {data['name']}, type: {data['type']}, value: {data['value']}")
+                print(data)
 
     def reset(self):
-        for m, m_obj in self._metrics.items():
-            pre_values = f"Resetting: {m_obj.snapshot()}"
-            m_obj.reset()
-            print(f"{pre_values} to {m_obj.snapshot()}")
+        with self._lock:
+            for m, m_obj in self._metrics.items():
+                pre_values = f"Resetting: {m_obj.snapshot()}"
+                m_obj.reset()
+                print(f"{pre_values} to {m_obj.snapshot()}")
 
 
 registry = MetricsRegistry.get_instance()
