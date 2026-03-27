@@ -5,7 +5,7 @@ Use when: you need to create different types based on input, without the caller 
 
 from abc import ABC, abstractmethod
 
-class DatabasePrivider(ABC):
+class DatabaseProvider(ABC):
     @abstractmethod
     def provision(self, name):
         pass
@@ -13,21 +13,21 @@ class DatabasePrivider(ABC):
     def backup(self):
         pass
 
-class PostgresProvider(DatabasePrivider):
+class PostgresProvider(DatabaseProvider):
     def provision(self, name):
         return f"PostgreSQL cluster {name} provisioned"
 
     def backup(self):
         return "pg_basebackup + WAL archiving"
 
-class RedisProvider(DatabasePrivider):
+class RedisProvider(DatabaseProvider):
     def provision(self, name):
         return f"Redis cluster {name} provisioned"
 
     def backup(self):
         return "RDB snapshot"
 
-class MySQLProvider(DatabasePrivider):
+class MySQLProvider(DatabaseProvider):
     def provision(self, name):
         return f"MySQL cluster {name} provisioned"
 
