@@ -21,3 +21,6 @@ class ConnectionPool:
         self._max_connections = max_connections
         self._pool: list = []
         self._initialized = True
+    """
+    PENDING IMPLEMENTATION
+    """
